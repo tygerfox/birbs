@@ -123,13 +123,14 @@ void move_arrows(World world) {
 		float y = world.arrows[i].y;
 		x += world.speed * dx;
 		y += world.speed * dy;
+		// Keep within boundaries
 		if (x < 0)
 			x += world.size;
+		else if (x > world.size)
+			x -= world.size;
 		if (y < 0)
 			y += world.size;
-		if (x > world.size)
-			x -= world.size;
-		if (y > world.size)
+		else if (y > world.size)
 			y -= world.size;
 		world.arrows[i].x = x;
 		world.arrows[i].y = y;
@@ -138,28 +139,30 @@ void move_arrows(World world) {
 
 void point_arrows(World world) {
 	for (int i=0; i < world.N; ++i) {
-		float x = world.arrows[i].x;
-		float y = world.arrows[i].y;
+		Arrow *birb = &world.arrows[i];
 		float xsum = 0, ysum = 0;
 		for (int j=0; j < world.N; ++j) {
 			if (j == i)
 				continue;
-			float dx = fabsf(world.arrows[j].x - x);
-			float dy = fabsf(world.arrows[j].y - y);
+			Arrow *neighbour = &world.arrows[j];
+			float dx = fabsf(neighbour->x - birb->x);
+			float dy = fabsf(neighbour->y - birb->y);
+			// Distance in recursive space
 			if (dx > world.size)
 				dx -= world.size;
 			if (dy > world.size)
 				dy -= world.size;
-			if (dx*dx + dy*dy <= world.radius) {
-				xsum += cosf(world.arrows[j].angle);
-				ysum += sinf(world.arrows[j].angle);
-			}
+			float r2 = world.radius * world.radius;
+			if (dx > world.radius || dy > world.radius || dx*dx + dy*dy > r2)
+				continue;
+			xsum += cosf(neighbour->angle);
+			ysum += sinf(neighbour->angle);
+		}
 		float mean_angle = atan2f(ysum, xsum);
 		if ((ysum == 0) & (xsum == 0))
 			mean_angle = world.arrows[i].angle;
 		float deflection = rand_uniform(-world.eta / 2, world.eta / 2);
 		world.arrows[i].angle_buffer = mean_angle + deflection;
-		}
 	}
 	for (int i=0; i < world.N; ++i)
 		world.arrows[i].angle = world.arrows[i].angle_buffer;
@@ -167,13 +170,13 @@ void point_arrows(World world) {
 
 void gravity(World world) {
 	for (int i=0; i<world.N; ++i) {
-		Arrow birb = world.arrows[i];
-		float xvel = world.speed * cosf(birb.angle);
-		float yvel = world.speed * sinf(birb.angle);
-		float xdist = birb.x - world.size / 2;
-		float ydist = birb.y - world.size / 2;
-		xvel -= xdist / 100000;
-		yvel -= ydist / 100000;
+		Arrow *birb = &world.arrows[i];
+		float xvel = world.speed * cosf(birb->angle);
+		float yvel = world.speed * sinf(birb->angle);
+		float xdist = birb->x - world.size / 2;
+		float ydist = birb->y - world.size / 2;
+		xvel -= xdist / 1000;
+		yvel -= ydist / 1000;
 		float norm = sqrtf(xvel*xvel + yvel*yvel);
 		xvel *= world.speed / norm;
 		yvel *= world.speed / norm;
@@ -184,7 +187,7 @@ void gravity(World world) {
 void anim_loop(SDL_Renderer* renderer, int width, int height, World* world) {
 	move_arrows(*world);
 	point_arrows(*world);
-	gravity(*world);
+	//gravity(*world); // experimental
 
 	clear_frame(renderer, 255, 255, 255);
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);

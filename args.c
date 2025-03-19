@@ -34,19 +34,19 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
 			break;
 		case 'e':
 			args->eta = atof(arg);
-			printf("Stochastic term set to: %d\n", args->num_birds);
+			printf("Stochastic term set to: %f\n", args->eta);
 			break;
 		case 's':
 			args->speed = atof(arg);
-			printf("Speed set to: %d\n", args->num_birds);
+			printf("Speed set to: %f\n", args->speed);
 			break;
 		case 'r':
 			args->radius = atof(arg);
-			printf("Radius set to: %d\n", args->num_birds);
+			printf("Radius set to: %f\n", args->radius);
 			break;
 		case 'l':
 			args->size = atof(arg);
-			printf("World size set to: %d\n", args->num_birds);
+			printf("World size set to: %f\n", args->size);
 			break;
 		case ARGP_KEY_ARG:
 			if (state->arg_num >= 2)
@@ -68,7 +68,10 @@ struct arguments get_args(int argc, char *argv[]) {
 	args.radius = RADIUS;
 	args.size = WORLD_SIZE;
 
-	argp_parse(&argp, argc, argv, 0, 0, &args);
+	if (argc == 1)
+		printf("To see available parameters, add \"--help\" as a commandline argument.\n");
+	else
+		argp_parse(&argp, argc, argv, 0, 0, &args);
 	
 	return args;
 }
